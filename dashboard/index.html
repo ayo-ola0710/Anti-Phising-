@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NITDA Phishing Defense Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-900 text-slate-100 min-h-screen">
+    <div class="max-w-5xl mx-auto p-8">
+      <header class="border-b border-slate-800 pb-6 mb-10">
+        <h1 class="text-3xl font-bold text-blue-500">NITDA Phishing Defense</h1>
+        <p class="text-slate-500">
+          Evolving Phishing Attack Vectors & Network-Level Defense [cite: 1]
+        </p>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div
+          class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg"
+        >
+          <span class="text-slate-500 text-sm font-bold uppercase"
+            >Total Scans</span
+          >
+          <p id="stat-total" class="text-4xl font-mono font-bold">0</p>
+        </div>
+        <div
+          class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg"
+        >
+          <span class="text-slate-500 text-sm font-bold uppercase"
+            >High Threats</span
+          >
+          <p id="stat-high" class="text-4xl font-mono font-bold text-red-500">
+            0
+          </p>
+        </div>
+        <div
+          class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg"
+        >
+          <span class="text-slate-500 text-sm font-bold uppercase"
+            >System Status</span
+          >
+          <p class="text-4xl font-mono font-bold text-green-500">Active</p>
+        </div>
+      </div>
+
+      <main class="bg-slate-800 rounded-2xl p-8 border border-slate-700">
+        <h2 class="text-xl font-bold mb-6">
+          Industrialized Social Engineering Scanner
+        </h2>
+        <div class="space-y-4">
+          <input
+            type="text"
+            id="email"
+            placeholder="Sender Email"
+            class="w-full bg-slate-900 border border-slate-700 p-4 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+          <textarea
+            id="content"
+            placeholder="Email Content / Lure Text"
+            class="w-full bg-slate-900 border border-slate-700 p-4 rounded-lg h-40 focus:ring-2 focus:ring-blue-500 outline-none"
+          ></textarea>
+          <button
+            onclick="analyzeEmail()"
+            id="btn"
+            class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-lg font-bold text-lg transition-all"
+          >
+            Execute Defense Scan
+          </button>
+        </div>
+
+        <div
+          id="results"
+          class="hidden mt-10 p-6 bg-slate-900 rounded-xl border-l-8 border-yellow-500"
+        >
+          <h3 class="text-xl font-bold mb-4">Security Analysis Found:</h3>
+          <div class="flex gap-10">
+            <div>
+              <p class="text-slate-500">Risk Score</p>
+              <p id="res-score" class="text-3xl font-bold"></p>
+            </div>
+            <div>
+              <p class="text-slate-500">Threat Level</p>
+              <p id="res-level" class="text-3xl font-bold"></p>
+            </div>
+          </div>
+          <p
+            id="res-spoof"
+            class="mt-4 text-red-400 font-bold uppercase tracking-widest animate-pulse"
+          ></p>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      async function updateStats() {
+        const res = await fetch("http://127.0.0.1:8000/api/stats");
+        const data = await res.json();
+        document.getElementById("stat-total").innerText = data.total_scans;
+        document.getElementById("stat-high").innerText = data.high_threats;
+      }
+
+      async function analyzeEmail() {
+        const email = document.getElementById("email").value;
+        const content = document.getElementById("content").value;
+        if (!email || !content) return alert("All fields required");
+
+        const res = await fetch("http://127.0.0.1:8000/api/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, content }),
+        });
+        const data = await res.json();
+
+        document.getElementById("results").classList.remove("hidden");
+        document.getElementById("res-score").innerText = data.score + "%";
+        document.getElementById("res-level").innerText = data.level;
+        document.getElementById("res-spoof").innerText = data.is_spoof
+          ? "⚠️ Alert: Domain Impersonation Detected!"
+          : "";
+
+        updateStats();
+      }
+      updateStats();
+    </script>
+  </body>
+</html>
