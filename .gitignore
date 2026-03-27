@@ -3,8 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
+
 
 # Distribution / packaging
 .Python
@@ -65,8 +64,6 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
-# Scrapy stuff:
-.scrapy
 
 # Sphinx documentation
 docs/_build/
@@ -88,16 +85,6 @@ pdm.lock
 .pdm-python
 .pdm-build/
 
-# PEP 582; used by e.g. github.com/fannheyward/coc-pyright
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
 # Environments
 .env
 .venv
@@ -107,32 +94,7 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
 
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-.idea/
 
 # Database
 database/*.db

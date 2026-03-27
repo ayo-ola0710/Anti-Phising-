@@ -47,79 +47,296 @@
         <h2 class="text-xl font-bold mb-6">
           Industrialized Social Engineering Scanner
         </h2>
-        <div class="space-y-4">
+        
+        <!-- Tab Navigation for Text or QR Scan -->
+        <div class="mb-6 flex space-x-4 border-b border-slate-700 pb-4">
+            <button id="tab-email" class="text-blue-500 font-bold border-b-2 border-blue-500 pb-2 transition-colors" onclick="switchTab('email')">Email/Text Scan</button>
+            <button id="tab-qr" class="text-slate-400 font-bold border-b-2 border-transparent hover:text-slate-200 pb-2 transition-colors" onclick="switchTab('qr')">QR Form (Quishing) Scan</button>
+        </div>
+
+        <!-- Text Scan Form -->
+        <div id="form-email" class="space-y-4">
           <input
             type="text"
             id="email"
             placeholder="Sender Email"
-            class="w-full bg-slate-900 border border-slate-700 p-4 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            class="w-full bg-slate-900 border border-slate-700 p-4 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           />
           <textarea
             id="content"
             placeholder="Email Content / Lure Text"
-            class="w-full bg-slate-900 border border-slate-700 p-4 rounded-lg h-40 focus:ring-2 focus:ring-blue-500 outline-none"
+            class="w-full bg-slate-900 border border-slate-700 p-4 rounded-lg h-40 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           ></textarea>
           <button
             onclick="analyzeEmail()"
-            id="btn"
+            id="btn-scan"
             class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-lg font-bold text-lg transition-all"
           >
-            Execute Defense Scan
+            Execute Threat Scan
           </button>
         </div>
 
+        <!-- QR Scan Form -->
+        <div id="form-qr" class="space-y-4 hidden">
+          <div class="w-full bg-slate-900 border-2 border-dashed border-slate-700 p-10 rounded-lg text-center hover:border-blue-500 transition-colors">
+            <input type="file" id="qr-file" accept="image/*" class="hidden" onchange="updateFileName()" />
+            <label for="qr-file" class="cursor-pointer flex flex-col items-center justify-center">
+                <svg class="w-12 h-12 text-slate-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span id="qr-file-name" class="text-slate-400">Click to upload QR Code image</span>
+            </label>
+          </div>
+          <button
+            onclick="analyzeQR()"
+            id="btn-qr"
+            class="w-full bg-purple-600 hover:bg-purple-700 py-4 rounded-lg font-bold text-lg transition-all"
+          >
+            Analyze QR Code
+          </button>
+        </div>
+
+        <!-- Dashboard Results Panel -->
         <div
           id="results"
-          class="hidden mt-10 p-6 bg-slate-900 rounded-xl border-l-8 border-yellow-500"
+          class="hidden mt-10 p-6 bg-slate-900 rounded-xl border-t border-slate-700 shadow-inner"
         >
-          <h3 class="text-xl font-bold mb-4">Security Analysis Found:</h3>
-          <div class="flex gap-10">
+          <h3 class="text-xl font-bold mb-4 border-b border-slate-800 pb-2">Security Analysis Results</h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
             <div>
-              <p class="text-slate-500">Risk Score</p>
-              <p id="res-score" class="text-3xl font-bold"></p>
+              <p class="text-slate-500 text-sm uppercase tracking-wider mb-1">Risk Score</p>
+              <div class="flex items-end gap-2">
+                <p id="res-score" class="text-4xl font-bold"></p>
+                <span class="text-slate-500 mb-1">/ 100</span>
+              </div>
             </div>
             <div>
-              <p class="text-slate-500">Threat Level</p>
-              <p id="res-level" class="text-3xl font-bold"></p>
+              <p class="text-slate-500 text-sm uppercase tracking-wider mb-1">Threat Level</p>
+              <p id="res-level" class="text-4xl font-bold"></p>
             </div>
           </div>
-          <p
-            id="res-spoof"
-            class="mt-4 text-red-400 font-bold uppercase tracking-widest animate-pulse"
-          ></p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <!-- DNS Security Panel -->
+              <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                  <h4 class="text-sm text-slate-400 uppercase tracking-widest mb-3">DNS Security</h4>
+                  <div class="flex flex-col gap-2">
+                      <div class="flex justify-between items-center bg-slate-900 p-2 rounded">
+                          <span class="text-slate-300">SPF Record</span>
+                          <span id="res-spf" class="font-mono text-xs px-2 py-1 rounded"></span>
+                      </div>
+                      <div class="flex justify-between items-center bg-slate-900 p-2 rounded">
+                          <span class="text-slate-300">DMARC Record</span>
+                          <span id="res-dmarc" class="font-mono text-xs px-2 py-1 rounded"></span>
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Content Analysis Panel -->
+              <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                  <h4 class="text-sm text-slate-400 uppercase tracking-widest mb-3">Content Analysis</h4>
+                  <div class="flex flex-col gap-2">
+                      <div class="flex justify-between items-center bg-slate-900 p-2 rounded">
+                          <span class="text-slate-300">Suspicious URLs Found</span>
+                          <span id="res-urls" class="font-mono text-sm bg-slate-700 text-slate-200 px-2 py-1 rounded">0</span>
+                      </div>
+                      <div class="bg-slate-900 p-2 rounded">
+                          <span class="block text-sm text-slate-500 mb-2">Detected Tactics</span>
+                          <div id="res-tactics" class="flex flex-wrap gap-2">
+                              <!-- Dynamic Tags Generated Here -->
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Alert Context Blocks -->
+          <div id="res-extracted-url-container" class="hidden mt-6 bg-slate-800 p-4 rounded-lg border border-slate-700 overflow-hidden">
+              <h4 class="text-sm text-slate-400 uppercase tracking-widest mb-2">Extracted URL from QR</h4>
+              <p id="res-extracted-url" class="font-mono text-blue-400 break-all"></p>
+          </div>
+
+          <div id="res-spoof-container" class="hidden mt-6 bg-red-900/40 border border-red-500/50 p-4 rounded-lg">
+             <p class="text-red-400 font-bold uppercase tracking-widest animate-pulse flex items-center gap-3">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                 Alert: Domain Impersonation Detected!
+             </p>
+          </div>
         </div>
       </main>
     </div>
 
     <script>
       async function updateStats() {
-        const res = await fetch("http://127.0.0.1:8000/api/stats");
-        const data = await res.json();
-        document.getElementById("stat-total").innerText = data.total_scans;
-        document.getElementById("stat-high").innerText = data.high_threats;
+        try {
+          const res = await fetch("http://127.0.0.1:8000/api/stats");
+          const data = await res.json();
+          document.getElementById("stat-total").innerText = data.total_scans;
+          document.getElementById("stat-high").innerText = data.high_threats;
+        } catch (e) {
+          console.error("Failed to load stats:", e);
+        }
+      }
+
+      function switchTab(tab) {
+          if (tab === 'email') {
+              document.getElementById("form-email").classList.remove("hidden");
+              document.getElementById("form-qr").classList.add("hidden");
+              document.getElementById("tab-email").className = "text-blue-500 font-bold border-b-2 border-blue-500 pb-2 transition-colors";
+              document.getElementById("tab-qr").className = "text-slate-400 font-bold border-b-2 border-transparent hover:text-slate-200 pb-2 transition-colors";
+          } else {
+              document.getElementById("form-qr").classList.remove("hidden");
+              document.getElementById("form-email").classList.add("hidden");
+              document.getElementById("tab-qr").className = "text-blue-500 font-bold border-b-2 border-blue-500 pb-2 transition-colors";
+              document.getElementById("tab-email").className = "text-slate-400 font-bold border-b-2 border-transparent hover:text-slate-200 pb-2 transition-colors";
+          }
+          document.getElementById("results").classList.add("hidden");
+      }
+
+      function updateFileName() {
+          const input = document.getElementById('qr-file');
+          if (input.files.length > 0) {
+              const nameLabel = document.getElementById('qr-file-name');
+              nameLabel.innerText = input.files[0].name;
+              nameLabel.classList.replace("text-slate-400", "text-blue-400");
+          }
+      }
+
+      function displayResults(data) {
+          document.getElementById("results").classList.remove("hidden");
+          
+          // Basic Score & Level
+          document.getElementById("res-score").innerText = data.score;
+          const levelEl = document.getElementById("res-level");
+          levelEl.innerText = data.level;
+          levelEl.className = "text-4xl font-bold " + 
+              (data.level === 'High' ? 'text-red-500' : data.level === 'Medium' ? 'text-yellow-500' : 'text-green-500');
+          
+          // Domain Impersonation banner
+          const spoofContainer = document.getElementById("res-spoof-container");
+          if (data.is_spoof) {
+              spoofContainer.classList.remove("hidden");
+          } else {
+              spoofContainer.classList.add("hidden");
+          }
+
+          // URL Analysis & Detected Tactics
+          document.getElementById("res-urls").innerText = data.url_count ?? 0;
+          
+          const tacticsContainer = document.getElementById("res-tactics");
+          tacticsContainer.innerHTML = '';
+          if (data.tactics_detected && data.tactics_detected.length > 0) {
+              data.tactics_detected.forEach(tactic => {
+                  const span = document.createElement('span');
+                  span.className = "text-xs font-semibold uppercase tracking-wide bg-red-900/60 text-red-300 px-2 py-1 rounded border border-red-700/50";
+                  span.innerText = tactic;
+                  tacticsContainer.appendChild(span);
+              });
+          } else {
+              tacticsContainer.innerHTML = '<span class="text-sm text-slate-500 italic">None detected</span>';
+          }
+
+          // DNS Security status
+          const spfEl = document.getElementById("res-spf");
+          const dmarcEl = document.getElementById("res-dmarc");
+          if (data.dns_security) {
+              spfEl.innerText = data.dns_security.spf ? "PASS" : "FAIL";
+              spfEl.className = "font-mono text-xs font-bold px-2 py-1 rounded " + 
+                  (data.dns_security.spf ? "bg-green-900/60 text-green-400 border border-green-800" : "bg-red-900/60 text-red-400 border border-red-800");
+              
+              dmarcEl.innerText = data.dns_security.dmarc ? "PASS" : "FAIL";
+              dmarcEl.className = "font-mono text-xs font-bold px-2 py-1 rounded " + 
+                  (data.dns_security.dmarc ? "bg-green-900/60 text-green-400 border border-green-800" : "bg-red-900/60 text-red-400 border border-red-800");
+          } else {
+              spfEl.innerText = "N/A";
+              spfEl.className = "font-mono text-xs px-2 py-1 rounded bg-slate-700 text-slate-400";
+              dmarcEl.innerText = "N/A";
+              dmarcEl.className = "font-mono text-xs px-2 py-1 rounded bg-slate-700 text-slate-400";
+          }
+
+          // Extracted URL block (for QR codes)
+          const extractedUrlContainer = document.getElementById("res-extracted-url-container");
+          if (data.extracted_url) {
+              extractedUrlContainer.classList.remove("hidden");
+              document.getElementById("res-extracted-url").innerText = data.extracted_url;
+          } else {
+              extractedUrlContainer.classList.add("hidden");
+          }
+
+          updateStats();
       }
 
       async function analyzeEmail() {
+        const btn = document.getElementById("btn-scan");
+        btn.innerText = "Scanning Threat Vector...";
+        btn.disabled = true;
+        btn.classList.add("opacity-70", "cursor-not-allowed");
+
         const email = document.getElementById("email").value;
         const content = document.getElementById("content").value;
-        if (!email || !content) return alert("All fields required");
+        
+        if (!email || !content) {
+            alert("Sender Email and Content are required.");
+            btn.innerText = "Execute Threat Scan";
+            btn.disabled = false;
+            btn.classList.remove("opacity-70", "cursor-not-allowed");
+            return;
+        }
 
-        const res = await fetch("http://127.0.0.1:8000/api/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, content }),
-        });
-        const data = await res.json();
-
-        document.getElementById("results").classList.remove("hidden");
-        document.getElementById("res-score").innerText = data.score + "%";
-        document.getElementById("res-level").innerText = data.level;
-        document.getElementById("res-spoof").innerText = data.is_spoof
-          ? "⚠️ Alert: Domain Impersonation Detected!"
-          : "";
-
-        updateStats();
+        try {
+            const res = await fetch("http://127.0.0.1:8000/api/scan", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, content }),
+            });
+            const data = await res.json();
+            displayResults(data);
+        } catch (e) {
+            alert("Connection error: Ensure the backend API is running.");
+        } finally {
+            btn.innerText = "Execute Threat Scan";
+            btn.disabled = false;
+            btn.classList.remove("opacity-70", "cursor-not-allowed");
+        }
       }
+
+      async function analyzeQR() {
+          const btn = document.getElementById("btn-qr");
+          btn.innerText = "Analyzing Quishing Vector...";
+          btn.disabled = true;
+          btn.classList.add("opacity-70", "cursor-not-allowed");
+
+          const fileInput = document.getElementById("qr-file");
+          if (fileInput.files.length === 0) {
+              alert("Please select a QR code image to upload.");
+              btn.innerText = "Analyze QR Code";
+              btn.disabled = false;
+              btn.classList.remove("opacity-70", "cursor-not-allowed");
+              return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", fileInput.files[0]);
+
+          try {
+              const res = await fetch("http://127.0.0.1:8000/api/quish", {
+                 method: "POST",
+                 body: formData
+              });
+              const data = await res.json();
+              if (data.error) {
+                  alert("Scan Failed: " + data.error);
+              } else {
+                  displayResults(data);
+              }
+          } catch(e) {
+              alert("Connection error: Ensure the backend API is running.");
+          } finally {
+              btn.innerText = "Analyze QR Code";
+              btn.disabled = false;
+              btn.classList.remove("opacity-70", "cursor-not-allowed");
+          }
+      }
+
       updateStats();
     </script>
   </body>
