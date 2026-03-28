@@ -6,6 +6,7 @@ import dns.resolver
 import numpy as np
 import cv2
 from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -124,6 +125,13 @@ def decode_qr(image_bytes):
     except Exception as e:
         return f"ERROR: {str(e)}"
     return None
+
+# --- FRONTEND ROUTE ---
+FRONTEND_PATH = os.path.join(os.path.dirname(__file__), "../dashboard/index.html")
+
+@app.get("/")
+async def frontend():
+    return FileResponse(FRONTEND_PATH)
 
 # --- API ENDPOINTS ---
 class ScanRequest(BaseModel):
